@@ -859,8 +859,6 @@ export class Task {
 		this.mcpHub.clearNotificationCallback()
 	}
 
-	// Checkpoints logic moved to checkpointManager - call directly on this.checkpointManager
-
 	// Tools
 
 	/**
