@@ -5,22 +5,29 @@ export function convertAnthropicContentToGemini(content: string | Anthropic.Cont
 	if (typeof content === "string") {
 		return [{ text: content }]
 	}
-	return content.flatMap((block): Part => {
+	return content.flatMap((block): Part[] => {
 		switch (block.type) {
 			case "text":
-				return { text: block.text }
+				return [{ text: block.text }]
 			case "image":
 				if (block.source.type !== "base64") {
-					throw new Error("Unsupported image source type")
+					// Silently ignore unsupported image source types
+					return []
 				}
-				return {
-					inlineData: {
-						data: block.source.data,
-						mimeType: block.source.media_type,
+				return [
+					{
+						inlineData: {
+							data: block.source.data,
+							mimeType: block.source.media_type,
+						},
 					},
-				}
+				]
+			case "thinking":
+				// Silently ignore thinking blocks
+				return []
 			default:
-				throw new Error(`Unsupported content block type: ${block.type}`)
+				// Silently ignore any other unsupported content block types
+				return []
 		}
 	})
 }
