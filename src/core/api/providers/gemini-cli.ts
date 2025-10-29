@@ -128,7 +128,10 @@ export class GeminiCliHandler implements ApiHandler {
 	 * Discover or retrieve the project ID
 	 */
 	private async discoverProjectId(): Promise<string> {
-		// If we already have a project ID, use it
+		// Check environment variables first (same as official gemini-cli)
+		const envProjectId = process.env["GOOGLE_CLOUD_PROJECT"] || process.env["GOOGLE_CLOUD_PROJECT_ID"]
+
+		// If we have a configured project ID, use it
 		if (this.options.geminiCliProjectId) {
 			return this.options.geminiCliProjectId
 		}
@@ -138,15 +141,15 @@ export class GeminiCliHandler implements ApiHandler {
 			return this.projectId
 		}
 
-		// Start with a default project ID (can be anything for personal OAuth)
-		const initialProjectId = "default"
+		// Use env project ID or undefined for initial discovery
+		const initialProjectId = envProjectId || undefined
 
 		// Prepare client metadata
 		const clientMetadata = {
 			ideType: "IDE_UNSPECIFIED",
 			platform: "PLATFORM_UNSPECIFIED",
 			pluginType: "GEMINI",
-			duetProject: initialProjectId,
+			...(initialProjectId && { duetProject: initialProjectId }),
 		}
 
 		try {
@@ -158,20 +161,46 @@ export class GeminiCliHandler implements ApiHandler {
 
 			const loadResponse = await this.callEndpoint("loadCodeAssist", loadRequest)
 
-			// Check if we already have a project ID from the response
-			if (loadResponse.cloudaicompanionProject) {
-				this.projectId = loadResponse.cloudaicompanionProject
-				return this.projectId as string
+			// If user is already onboarded, return the project ID
+			if (loadResponse.currentTier) {
+				if (loadResponse.cloudaicompanionProject) {
+					this.projectId = loadResponse.cloudaicompanionProject
+					return this.projectId as string
+				}
+				// If we have a project ID from env/config, use it
+				if (initialProjectId) {
+					this.projectId = initialProjectId
+					return this.projectId as string
+				}
+				throw new Error(
+					"This account requires setting the GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_PROJECT_ID environment variable",
+				)
 			}
 
 			// If no existing project, we need to onboard
 			const defaultTier = loadResponse.allowedTiers?.find((tier: any) => tier.isDefault)
 			const tierId = defaultTier?.id || "free-tier"
 
-			const onboardRequest = {
-				tierId: tierId,
-				cloudaicompanionProject: initialProjectId,
-				metadata: clientMetadata,
+			// Critical: For free tier, cloudaicompanionProject must be undefined
+			// Setting a project causes "Precondition Failed" or "Permission Denied" errors
+			let onboardRequest: any
+			if (tierId === "FREE" || tierId === "free-tier") {
+				console.log("[GeminiCLI] Free tier detected - using managed project")
+				onboardRequest = {
+					tierId: tierId,
+					cloudaicompanionProject: undefined,
+					metadata: clientMetadata,
+				}
+			} else {
+				console.log("[GeminiCLI] Paid tier detected - using explicit project")
+				onboardRequest = {
+					tierId: tierId,
+					cloudaicompanionProject: initialProjectId,
+					metadata: {
+						...clientMetadata,
+						...(initialProjectId && { duetProject: initialProjectId }),
+					},
+				}
 			}
 
 			let lroResponse = await this.callEndpoint("onboardUser", onboardRequest)
@@ -182,9 +211,21 @@ export class GeminiCliHandler implements ApiHandler {
 				lroResponse = await this.callEndpoint("onboardUser", onboardRequest)
 			}
 
-			const discoveredProjectId = lroResponse.response?.cloudaicompanionProject?.id || initialProjectId
-			this.projectId = discoveredProjectId
-			return this.projectId as string
+			// Get the project ID from the response
+			if (lroResponse.response?.cloudaicompanionProject?.id) {
+				this.projectId = lroResponse.response.cloudaicompanionProject.id
+				return this.projectId as string
+			}
+
+			// If we have a project ID from env/config, use it
+			if (initialProjectId) {
+				this.projectId = initialProjectId
+				return this.projectId as string
+			}
+
+			throw new Error(
+				"This account requires setting the GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_PROJECT_ID environment variable",
+			)
 		} catch (error: any) {
 			console.error("Failed to discover project ID:", error.response?.data || error.message)
 			throw new Error("Could not discover project ID. Make sure you're authenticated with 'gemini auth'.")
