@@ -24,6 +24,7 @@ func GetBYOProviderList() []BYOProviderOption {
 		{Name: "X AI (Grok)", Provider: cline.ApiProvider_XAI},
 		{Name: "AWS Bedrock", Provider: cline.ApiProvider_BEDROCK},
 		{Name: "Google Gemini", Provider: cline.ApiProvider_GEMINI},
+		{Name: "Google Gemini CLI", Provider: cline.ApiProvider_GEMINI_CLI},
 		{Name: "Ollama", Provider: cline.ApiProvider_OLLAMA},
 		{Name: "Cerebras", Provider: cline.ApiProvider_CEREBRAS},
 		{Name: "Oracle Code Assist", Provider: cline.ApiProvider_OCA},
@@ -95,6 +96,8 @@ func GetBYOProviderPlaceholder(provider cline.ApiProvider) string {
 	case cline.ApiProvider_BEDROCK:
 		return "e.g., anthropic.claude-sonnet-4-5-20250929-v1:0"
 	case cline.ApiProvider_GEMINI:
+		return "e.g., gemini-2.5-pro"
+	case cline.ApiProvider_GEMINI_CLI:
 		return "e.g., gemini-2.5-pro"
 	case cline.ApiProvider_OLLAMA:
 		return "e.g., qwen3-coder:30b"

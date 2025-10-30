@@ -86,12 +86,14 @@ const GO_OUTPUT_FILE = path.resolve(ROOT_DIR, "cli", "pkg", "generated", "provid
  */
 const ENABLED_PROVIDERS = [
 	"anthropic", // Anthropic Claude models
+	"claude-code",
 	"openai", // OpenAI-compatible providers
 	"openai-native", // OpenAI official API
 	"openrouter", // OpenRouter meta-provider
 	"xai", // X AI (Grok)
 	"bedrock", // AWS Bedrock
 	"gemini", // Google Gemini
+	"gemini-cli", // Google Gemini
 	"ollama", // Ollama local models
 	"cerebras", // Cerebras models
 	"oca", // Oracle Code Assist
@@ -119,7 +121,8 @@ function extractDefaultModelIds(content) {
 		regex.lastIndex = 0
 		let match
 
-		while ((match = regex.exec(content)) !== null) {
+		match = regex.exec(content)
+		while (match !== null) {
 			const [, providerPrefix, modelId] = match
 			// Map prefix to provider ID (e.g., "anthropic" -> "anthropic", "openAiNative" -> "openai-native")
 			const providerId = providerPrefix
@@ -133,6 +136,8 @@ function extractDefaultModelIds(content) {
 				const cleanModelId = modelId.split(":")[0]
 				defaultIds[providerId] = cleanModelId
 			}
+
+			match = regex.exec(content)
 		}
 	}
 
@@ -200,7 +205,9 @@ async function parseApiDefinitions() {
 	const validation = validateApiKeyMappings(providerIds, providerApiKeyMap)
 	console.log(chalk.green(`   Mapped API keys for ${validation.mappedProviders}/${validation.totalProviders} providers`))
 	if (validation.warnings.length > 0) {
-		validation.warnings.forEach((warning) => console.log(chalk.yellow(`   ${warning}`)))
+		for (const warning of validation.warnings) {
+			console.log(chalk.yellow(`   ${warning}`))
+		}
 	}
 
 	// Extract ApiHandlerOptions interface to understand configuration fields
@@ -264,7 +271,7 @@ function parseConfigurationFields(optionsContent, providerApiKeyMap, apiSecretsF
 	// These are the actual authentication fields that need to be collected
 	for (const fieldName of apiSecretsFields.fieldNames) {
 		const fieldInfo = apiSecretsFields.fields[fieldName]
-		const lowerName = fieldName.toLowerCase()
+		const _lowerName = fieldName.toLowerCase()
 
 		// Determine which provider this field belongs to
 		let category = "general"
@@ -322,6 +329,7 @@ function parseConfigurationFields(optionsContent, providerApiKeyMap, apiSecretsF
 			"ollama",
 			"lmstudio",
 			"gemini",
+			"gemini-cli",
 			"deepseek",
 			"qwen",
 			"doubao",
@@ -344,7 +352,7 @@ function parseConfigurationFields(optionsContent, providerApiKeyMap, apiSecretsF
 			"zai",
 			"requesty",
 			"together",
-			"claudecode",
+			"claude-code",
 			"cline",
 		]
 
@@ -374,7 +382,7 @@ function parseConfigurationFields(optionsContent, providerApiKeyMap, apiSecretsF
 
 		// Check if this field is required for any provider using the auto-discovered API key map
 		// A field is marked as required if it appears in any provider's required fields list
-		for (const [providerId, requiredFields] of Object.entries(providerApiKeyMap)) {
+		for (const [_providerId, requiredFields] of Object.entries(providerApiKeyMap)) {
 			if (requiredFields.includes(name)) {
 				required = true
 				break
@@ -427,6 +435,7 @@ function extractModelDefinitions(content) {
 			vertex: "vertex",
 			openAiNative: "openai-native",
 			gemini: "gemini",
+			geminiCli: "gemini-cli",
 			deepSeek: "deepseek",
 			huggingFace: "huggingface",
 			qwen: "qwen",
@@ -827,7 +836,7 @@ func getFieldsByProvider(providerID string, allFields []ConfigField, required bo
 /**
  * Generate provider metadata for each provider
  */
-function generateProviderMetadata(providers, configFields, modelDefinitions, defaultModelIds) {
+function generateProviderMetadata(providers, _configFields, modelDefinitions, defaultModelIds) {
 	return providers
 		.map((providerId) => {
 			const displayName = getProviderDisplayName(providerId)
@@ -865,6 +874,7 @@ function getProviderDisplayName(providerId) {
 		ollama: "Ollama",
 		lmstudio: "LM Studio",
 		gemini: "Google Gemini",
+		"gemini-cli": "Google Gemini CLI",
 		"openai-native": "OpenAI",
 		requesty: "Requesty",
 		together: "Together AI",
@@ -907,14 +917,18 @@ function getDefaultModelId(providerId, models, defaultModelIds) {
 
 	// Fallback to pattern matching if no explicit default was found
 	const modelIds = Object.keys(models)
-	if (modelIds.length === 0) return ""
+	if (modelIds.length === 0) {
+		return ""
+	}
 
 	// Look for common default patterns
 	const defaultPatterns = ["latest", "default", "sonnet", "gpt-4", "claude-3", "gemini-pro"]
 
 	for (const pattern of defaultPatterns) {
 		const match = modelIds.find((id) => id.toLowerCase().includes(pattern))
-		if (match) return match
+		if (match) {
+			return match
+		}
 	}
 
 	// Return first model if no pattern matches
@@ -1003,7 +1017,7 @@ async function main() {
 }
 
 // Add helper function to the generated Go code
-const helperFunction = `
+const _helperFunction = `
 // getFieldsByProvider filters configuration fields by provider and requirement
 func getFieldsByProvider(providerID string, allFields []ConfigField, required bool) []ConfigField {
 	var fields []ConfigField
@@ -1038,6 +1052,8 @@ func getFieldsByProvider(providerID string, allFields []ConfigField, required bo
 			isRelevant = strings.Contains(fieldName, "lmstudio")
 		case "gemini":
 			isRelevant = strings.Contains(fieldName, "gemini")
+		case "gemini-cli":
+			isRelevant = strings.Contains(fieldName, "gemini-cli")
 		}
 		
 		// General fields that apply to all providers

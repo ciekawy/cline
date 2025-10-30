@@ -458,6 +458,7 @@
 		"fzf": "^0.5.2",
 		"get-folder-size": "^5.0.0",
 		"globby": "^14.0.2",
+		"google-auth-library": "^10.1.0",
 		"grpc-health-check": "^2.0.2",
 		"https-proxy-agent": "^7.0.6",
 		"iconv-lite": "^0.6.3",
@@ -531,5 +532,12 @@
 		],
 		"all": true,
 		"exclude-after-remap": true
+	},
+	"optionalDependencies": {
+		"@emnapi/core": "^1.6.0",
+		"@emnapi/runtime": "^1.6.0",
+		"@emnapi/wasi-threads": "^1.1.0",
+		"@napi-rs/wasm-runtime": "^1.0.7",
+		"@tybys/wasm-util": "^0.10.1"
 	}
 }

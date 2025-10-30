@@ -109,6 +109,7 @@ func (r *ProviderListResult) GetAllReadyProviders() []*ProviderDisplay {
 		cline.ApiProvider_XAI,
 		cline.ApiProvider_BEDROCK,
 		cline.ApiProvider_GEMINI,
+		cline.ApiProvider_GEMINI_CLI,
 		cline.ApiProvider_OLLAMA,
 		cline.ApiProvider_CEREBRAS,
 		cline.ApiProvider_OCA,
@@ -228,6 +229,8 @@ func mapProviderStringToEnum(providerStr string) (cline.ApiProvider, bool) {
 		return cline.ApiProvider_BEDROCK, true
 	case "gemini":
 		return cline.ApiProvider_GEMINI, true
+	case "gemini-cli":
+		return cline.ApiProvider_GEMINI_CLI, true
 	case "ollama":
 		return cline.ApiProvider_OLLAMA, true
 	case "cerebras":
@@ -259,6 +262,8 @@ func GetProviderIDForEnum(provider cline.ApiProvider) string {
 		return "bedrock"
 	case cline.ApiProvider_GEMINI:
 		return "gemini"
+	case cline.ApiProvider_GEMINI_CLI:
+		return "gemini-cli"
 	case cline.ApiProvider_OLLAMA:
 		return "ollama"
 	case cline.ApiProvider_CEREBRAS:
@@ -336,6 +341,8 @@ func GetProviderDisplayName(provider cline.ApiProvider) string {
 		return "AWS Bedrock"
 	case cline.ApiProvider_GEMINI:
 		return "Google Gemini"
+	case cline.ApiProvider_GEMINI_CLI:
+		return "Google Gemini CLI"
 	case cline.ApiProvider_OLLAMA:
 		return "Ollama"
 	case cline.ApiProvider_CEREBRAS:

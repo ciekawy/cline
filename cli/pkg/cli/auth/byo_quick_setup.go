@@ -166,6 +166,7 @@ func validateQuickSetupProvider(providerID string) (cline.ApiProvider, error) {
 		cline.ApiProvider_OPENAI:        true,
 		cline.ApiProvider_ANTHROPIC:     true,
 		cline.ApiProvider_GEMINI:        true,
+		cline.ApiProvider_GEMINI_CLI:    true,
 		cline.ApiProvider_OPENROUTER:    true,
 		cline.ApiProvider_XAI:           true,
 		cline.ApiProvider_CEREBRAS:      true,

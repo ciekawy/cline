@@ -136,11 +136,13 @@ import (
 // Provider constants
 const (
 	ANTHROPIC = "anthropic"
+	CLAUDE_CODE = "claude-code"
 	OPENROUTER = "openrouter"
 	BEDROCK = "bedrock"
 	OPENAI = "openai"
 	OLLAMA = "ollama"
 	GEMINI = "gemini"
+	GEMINI_CLI = "gemini-cli"
 	OPENAI_NATIVE = "openai-native"
 	XAI = "xai"
 	CEREBRAS = "cerebras"
@@ -152,11 +154,13 @@ const (
 // To modify which providers are included, edit ENABLED_PROVIDERS in scripts/cli-providers.mjs
 var AllProviders = []string{
 	"anthropic",
+	"claude-code",
 	"openrouter",
 	"bedrock",
 	"openai",
 	"ollama",
 	"gemini",
+	"gemini-cli",
 	"openai-native",
 	"xai",
 	"cerebras",
@@ -355,6 +359,15 @@ var rawConfigFields = `	[
 	    "placeholder": ""
 	  },
 	  {
+	    "name": "claudeCodePath",
+	    "type": "string",
+	    "comment": "",
+	    "category": "general",
+	    "required": false,
+	    "fieldType": "string",
+	    "placeholder": ""
+	  },
+	  {
 	    "name": "openAiBaseUrl",
 	    "type": "string",
 	    "comment": "",
@@ -389,6 +402,24 @@ var rawConfigFields = `	[
 	    "required": false,
 	    "fieldType": "url",
 	    "placeholder": "https://api.example.com"
+	  },
+	  {
+	    "name": "geminiCliOAuthPath",
+	    "type": "string",
+	    "comment": "",
+	    "category": "gemini",
+	    "required": false,
+	    "fieldType": "string",
+	    "placeholder": ""
+	  },
+	  {
+	    "name": "geminiCliProjectId",
+	    "type": "string",
+	    "comment": "",
+	    "category": "gemini",
+	    "required": false,
+	    "fieldType": "string",
+	    "placeholder": ""
 	  },
 	  {
 	    "name": "azureApiVersion",
@@ -434,6 +465,15 @@ var rawConfigFields = `	[
 	    "required": false,
 	    "fieldType": "url",
 	    "placeholder": "https://api.example.com"
+	  },
+	  {
+	    "name": "minimaxApiLine",
+	    "type": "string",
+	    "comment": "",
+	    "category": "general",
+	    "required": false,
+	    "fieldType": "string",
+	    "placeholder": ""
 	  },
 	  {
 	    "name": "ocaMode",
@@ -568,6 +608,36 @@ var rawModelDefinitions = `	{
 	      "cacheReadsPrice": 0,
 	      "supportsImages": true,
 	      "supportsPromptCache": true
+	    }
+	  },
+	  "claude-code": {
+	    "claude-haiku-4-5-20251001": {
+	      "supportsImages": false,
+	      "supportsPromptCache": false
+	    },
+	    "claude-sonnet-4-5-20250929": {
+	      "supportsImages": false,
+	      "supportsPromptCache": false
+	    },
+	    "claude-sonnet-4-20250514": {
+	      "supportsImages": false,
+	      "supportsPromptCache": false
+	    },
+	    "claude-opus-4-1-20250805": {
+	      "supportsImages": false,
+	      "supportsPromptCache": false
+	    },
+	    "claude-opus-4-20250514": {
+	      "supportsImages": false,
+	      "supportsPromptCache": false
+	    },
+	    "claude-3-7-sonnet-20250219": {
+	      "supportsImages": false,
+	      "supportsPromptCache": false
+	    },
+	    "claude-3-5-haiku-20241022": {
+	      "supportsImages": false,
+	      "supportsPromptCache": false
 	    }
 	  },
 	  "bedrock": {
@@ -766,6 +836,24 @@ var rawModelDefinitions = `	{
 	      "supportsImages": false,
 	      "supportsPromptCache": false,
 	      "description": "A compact 20B open-weight Mixture-of-Experts language model designed for strong reasoning and tool use, ideal for edge devices and local inference."
+	    },
+	    "qwen.qwen3-coder-30b-a3b-v1:0": {
+	      "maxTokens": 8192,
+	      "contextWindow": 262144,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "supportsImages": false,
+	      "supportsPromptCache": false,
+	      "description": "Qwen3 Coder 30B MoE model with 3.3B activated parameters, optimized for code generation and analysis with 256K context window."
+	    },
+	    "qwen.qwen3-coder-480b-a35b-v1:0": {
+	      "maxTokens": 8192,
+	      "contextWindow": 262144,
+	      "inputPrice": 0,
+	      "outputPrice": 1,
+	      "supportsImages": false,
+	      "supportsPromptCache": false,
+	      "description": "Qwen3 Coder 480B flagship MoE model with 35B activated parameters, designed for complex coding tasks with advanced reasoning capabilities and 256K context window."
 	    }
 	  },
 	  "gemini": {
@@ -898,7 +986,87 @@ var rawModelDefinitions = `	{
 	      "supportsPromptCache": false
 	    }
 	  },
+	  "gemini-cli": {
+	    "gemini-2.5-pro": {
+	      "maxTokens": 65536,
+	      "contextWindow": 1048576,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "supportsImages": true,
+	      "supportsPromptCache": false,
+	      "description": "Google's Gemini 2.5 Pro model via OAuth (free tier)"
+	    },
+	    "gemini-2.5-flash": {
+	      "maxTokens": 65536,
+	      "contextWindow": 1048576,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "supportsImages": true,
+	      "supportsPromptCache": false,
+	      "description": "Google's Gemini 2.5 Flash model via OAuth (free tier)"
+	    },
+	    "gemini-2.0-flash-001": {
+	      "maxTokens": 8192,
+	      "contextWindow": 1048576,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "supportsImages": true,
+	      "supportsPromptCache": false,
+	      "description": "Google's Gemini 2.0 Flash model via OAuth (free tier)"
+	    },
+	    "gemini-1.5-flash-002": {
+	      "maxTokens": 8192,
+	      "contextWindow": 1048576,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "cacheWritesPrice": 1,
+	      "cacheReadsPrice": 0,
+	      "supportsImages": true,
+	      "supportsPromptCache": true
+	    },
+	    "gemini-1.5-pro-002": {
+	      "maxTokens": 8192,
+	      "contextWindow": 2097152,
+	      "inputPrice": 1,
+	      "outputPrice": 5,
+	      "supportsImages": true,
+	      "supportsPromptCache": false
+	    },
+	    "gemini-1.5-flash-exp-0827": {
+	      "maxTokens": 8192,
+	      "contextWindow": 1048576,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "supportsImages": true,
+	      "supportsPromptCache": false
+	    },
+	    "gemini-1.5-flash-8b-exp-0827": {
+	      "maxTokens": 8192,
+	      "contextWindow": 1048576,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "supportsImages": true,
+	      "supportsPromptCache": false
+	    },
+	    "gemini-exp-1206": {
+	      "maxTokens": 8192,
+	      "contextWindow": 2097152,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "supportsImages": true,
+	      "supportsPromptCache": false
+	    }
+	  },
 	  "openai-native": {
+	    "gpt-5-codex": {
+	      "maxTokens": 32768,
+	      "contextWindow": 400000,
+	      "inputPrice": 1,
+	      "outputPrice": 10,
+	      "cacheReadsPrice": 0,
+	      "supportsImages": true,
+	      "supportsPromptCache": true
+	    },
 	    "gpt-5-2025-08-07": {
 	      "maxTokens": 8192,
 	      "contextWindow": 272000,
@@ -1191,6 +1359,15 @@ var rawModelDefinitions = `	{
 	    }
 	  },
 	  "cerebras": {
+	    "zai-glm-4.6": {
+	      "maxTokens": 40000,
+	      "contextWindow": 128000,
+	      "inputPrice": 0,
+	      "outputPrice": 0,
+	      "supportsImages": false,
+	      "supportsPromptCache": false,
+	      "description": "Intelligent general purpose model with 2,000 tokens/s"
+	    },
 	    "gpt-oss-120b": {
 	      "maxTokens": 65536,
 	      "contextWindow": 128000,
@@ -1316,6 +1493,18 @@ func GetProviderDefinitions() (map[string]ProviderDefinition, error) {
 		SetupInstructions: `Get your API key from https://console.anthropic.com/`,
 	}
 
+	// Claude Code
+	definitions["claude-code"] = ProviderDefinition{
+		ID:              "claude-code",
+		Name:            "Claude Code",
+		RequiredFields:  getFieldsByProvider("claude-code", configFields, true),
+		OptionalFields:  getFieldsByProvider("claude-code", configFields, false),
+		Models:          modelDefinitions["claude-code"],
+		DefaultModelID:  "claude-sonnet-4-5-20250929",
+		HasDynamicModels: false,
+		SetupInstructions: `Configure Claude Code API credentials`,
+	}
+
 	// OpenRouter
 	definitions["openrouter"] = ProviderDefinition{
 		ID:              "openrouter",
@@ -1376,6 +1565,18 @@ func GetProviderDefinitions() (map[string]ProviderDefinition, error) {
 		SetupInstructions: `Get your API key from https://makersuite.google.com/app/apikey`,
 	}
 
+	// Google Gemini CLI
+	definitions["gemini-cli"] = ProviderDefinition{
+		ID:              "gemini-cli",
+		Name:            "Google Gemini CLI",
+		RequiredFields:  getFieldsByProvider("gemini-cli", configFields, true),
+		OptionalFields:  getFieldsByProvider("gemini-cli", configFields, false),
+		Models:          modelDefinitions["gemini-cli"],
+		DefaultModelID:  "gemini-2.5-pro",
+		HasDynamicModels: false,
+		SetupInstructions: `Configure Google Gemini CLI API credentials`,
+	}
+
 	// OpenAI
 	definitions["openai-native"] = ProviderDefinition{
 		ID:              "openai-native",
@@ -1407,7 +1608,7 @@ func GetProviderDefinitions() (map[string]ProviderDefinition, error) {
 		RequiredFields:  getFieldsByProvider("cerebras", configFields, true),
 		OptionalFields:  getFieldsByProvider("cerebras", configFields, false),
 		Models:          modelDefinitions["cerebras"],
-		DefaultModelID:  "qwen-3-coder-480b-free",
+		DefaultModelID:  "zai-glm-4.6",
 		HasDynamicModels: false,
 		SetupInstructions: `Get your API key from https://cloud.cerebras.ai/`,
 	}
@@ -1441,11 +1642,13 @@ func IsValidProvider(providerID string) bool {
 func GetProviderDisplayName(providerID string) string {
 	displayNames := map[string]string{
 		"anthropic": "Anthropic (Claude)",
+		"claude-code": "Claude Code",
 		"openrouter": "OpenRouter",
 		"bedrock": "AWS Bedrock",
 		"openai": "OpenAI Compatible",
 		"ollama": "Ollama",
 		"gemini": "Google Gemini",
+		"gemini-cli": "Google Gemini CLI",
 		"openai-native": "OpenAI",
 		"xai": "X AI (Grok)",
 		"cerebras": "Cerebras",

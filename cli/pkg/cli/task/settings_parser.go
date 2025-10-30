@@ -616,6 +616,8 @@ func parseApiProvider(value string) (cline.ApiProvider, error) {
 		return cline.ApiProvider_LMSTUDIO, nil
 	case "gemini":
 		return cline.ApiProvider_GEMINI, nil
+	case "gemini-cli":
+		return cline.ApiProvider_GEMINI_CLI, nil
 	case "openai_native":
 		return cline.ApiProvider_OPENAI_NATIVE, nil
 	case "requesty":
