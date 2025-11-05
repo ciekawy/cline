@@ -113,6 +113,7 @@ func (r *ProviderListResult) GetAllReadyProviders() []*ProviderDisplay {
 		cline.ApiProvider_OLLAMA,
 		cline.ApiProvider_CEREBRAS,
 		cline.ApiProvider_OCA,
+		cline.ApiProvider_HICAP,
 	}
 
 	// Check each provider to see if it's ready to use
@@ -239,6 +240,8 @@ func mapProviderStringToEnum(providerStr string) (cline.ApiProvider, bool) {
 		return cline.ApiProvider_CLINE, true
 	case "oca":
 		return cline.ApiProvider_OCA, true
+	case "hicap":
+		return cline.ApiProvider_HICAP, true
 	default:
 		return cline.ApiProvider_ANTHROPIC, false // Return 0 value with false
 	}
@@ -272,6 +275,8 @@ func GetProviderIDForEnum(provider cline.ApiProvider) string {
 		return "cline"
 	case cline.ApiProvider_OCA:
 		return "oca"
+	case cline.ApiProvider_HICAP:
+		return "hicap"
 	default:
 		return ""
 	}
@@ -351,6 +356,8 @@ func GetProviderDisplayName(provider cline.ApiProvider) string {
 		return "Cline (Official)"
 	case cline.ApiProvider_OCA:
 		return "Oracle Code Assist"
+	case cline.ApiProvider_HICAP:
+		return "Hicap"
 	default:
 		return "Unknown"
 	}
@@ -472,6 +479,7 @@ func DetectAllConfiguredProviders(ctx context.Context, manager *task.Manager) ([
 		{cline.ApiProvider_GEMINI, "geminiApiKey"},
 		{cline.ApiProvider_OLLAMA, "ollamaBaseUrl"}, // Ollama uses baseUrl instead of API key
 		{cline.ApiProvider_CEREBRAS, "cerebrasApiKey"},
+		{cline.ApiProvider_HICAP, "hicapApiKey"},
 	}
 
 	for _, providerCheck := range providersToCheck {
