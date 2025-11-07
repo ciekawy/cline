@@ -175,6 +175,7 @@ export interface ClineSayTool {
 	tool:
 		| "editedExistingFile"
 		| "newFileCreated"
+		| "fileDeleted"
 		| "readFile"
 		| "listFilesTopLevel"
 		| "listFilesRecursive"

@@ -2,45 +2,47 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { Content, GenerateContentResponse, Part } from "@google/genai"
 
 export function convertAnthropicContentToGemini(content: string | Anthropic.ContentBlockParam[]): Part[] {
-    if (typeof content === "string") {
-        return [{ text: content }]
-    }
-    return content
-        .filter((block) => block.type !== "thinking")  // Filter out thinking blocks first
-        .flatMap((block): Part => {
-            switch (block.type) {
-                case "text":
-                    return { text: block.text }
-                case "image":
-                    if (block.source.type !== "base64") {
-                        throw new Error("Unsupported image source type")
-                    }
-                    return {
-                        inlineData: {
-                            data: block.source.data,
-                            mimeType: block.source.media_type,
-                        },
-                    }
-                case "tool_use":
-                    return {
-                        functionCall: {
-                            name: block.name,
-                            args: block.input as Record<string, unknown>,
-                        },
-                    }
-                case "tool_result":
-                    return {
-                        functionResponse: {
-                            name: block.tool_use_id,
-                            response: {
-                                result: block.content,
-                            },
-                        },
-                    }
-                default:
-                    throw new Error(`Unsupported content block type: ${block.type}`)
-            }
-        })
+	if (typeof content === "string") {
+		return [{ text: content }]
+	}
+	return content
+		.flatMap((block): Part | undefined => {
+			switch (block.type) {
+				case "text":
+					return { text: block.text }
+				case "image":
+					if (block.source.type !== "base64") {
+						throw new Error("Unsupported image source type")
+					}
+					return {
+						inlineData: {
+							data: block.source.data,
+							mimeType: block.source.media_type,
+						},
+					}
+				case "tool_use":
+					return {
+						functionCall: {
+							name: block.name,
+							args: block.input as Record<string, unknown>,
+						},
+					}
+				case "tool_result":
+					return {
+						functionResponse: {
+							name: block.tool_use_id,
+							response: {
+								result: block.content,
+							},
+						},
+					}
+				case "thinking":
+					return { text: block.thinking, thought: true, thoughtSignature: block.signature }
+				default:
+					return undefined
+			}
+		})
+		.filter((part): part is Part => part !== undefined) // Filter out unsupported blocks
 }
 
 export function convertAnthropicMessageToGemini(message: Anthropic.Messages.MessageParam): Content {
